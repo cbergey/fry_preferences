@@ -1,0 +1,35 @@
+---
+title: "fry_analysis"
+output: html_document
+date: "2025-03-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+library(tidyverse)
+library(here)
+```
+
+```{r}
+data <- read_csv(here("data/fry_data.csv"))
+```
+
+```{r}
+fry_cols <- c("waffle_fry", "french_fry", "curly_fry", "shoestring_fry", "steak_fry", "crinkle_cut_fry", "sweet_potato_fry", "double_fried_fry", "wedge_fry")
+  
+data <- data %>%
+  rowwise() %>%
+  mutate(participant_mean = mean(c_across(fry_cols), na.rm = TRUE)) %>%
+  ungroup() %>%
+  pivot_longer(cols = fry_cols, names_to = "fry_type", values_to = "rating") %>%
+  mutate(centered_rating = rating - participant_mean)
+```
+
+```{r}
+data %>%
+  filter(fry_type %in% c("waffle_fry", "french_fry", "curly_fry")) %>%
+  ggplot(aes(x = age, y = centered_rating, group = fry_type)) +
+  geom_point() +
+  facet_wrap(~fry_type) +
+  geom_smooth()
+```

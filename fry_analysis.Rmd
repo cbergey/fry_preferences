@@ -114,7 +114,7 @@ Maybe you think french fries alone are a better control. Here are the ratings ce
 
 ## Conclusion
 
-Waffle fries don't seem to be especially liked among millennials—at least not at an effect size that would disturb me. I can eat my waffle fries in peace. As ever, when studying human behavior we mostly find nothing at all.
+Waffle fries don't seem to be especially liked among millennials, at least not at an effect size that would disturb me. I can eat my waffle fries in peace. As ever, when studying human behavior we mostly find nothing at all.
 
-This endeavor was unsystematic and the results are inconclusive. All data and code are open for your review. You may say: all this to assuage your anxieties about aging and dying? Well, people have done worse. 
+This endeavor was unsystematic and the results are inconclusive. All data and code are open for your review. You may say, all this to assuage your fears of aging and dying? Well, people have done worse. 
 

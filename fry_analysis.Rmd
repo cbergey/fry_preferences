@@ -1,14 +1,24 @@
 ---
-title: "fry_analysis"
-output: html_document
-date: "2025-03-16"
+output: 
+  pdf_document:
+    template: ./style/svm-latex-article2.tex
+    keep_tex: true
+sansfont: Linux_Biolinum
+title: "Fry Preferences"
+sansitup: TRUE
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(here)
 ```
+
+I was in a bar eating waffle fries and realized the bar was only playing 2010s music. I began to worry this was a millennial bar. They were pandering to me and I had been unaware. 
+
+Were the waffle fries a part of the pandering? To know, I'd have to find out whether millennials like waffle fries more than other people of other generations.
+
+## Method
 
 ```{r}
 data <- read_csv(here("data/fry_data.csv"))
@@ -16,20 +26,95 @@ data <- read_csv(here("data/fry_data.csv"))
 
 ```{r}
 fry_cols <- c("waffle_fry", "french_fry", "curly_fry", "shoestring_fry", "steak_fry", "crinkle_cut_fry", "sweet_potato_fry", "double_fried_fry", "wedge_fry")
+
+main_fries <- c("french_fry", "waffle_fry", "curly_fry")
   
 data <- data %>%
   rowwise() %>%
-  mutate(participant_mean = mean(c_across(fry_cols), na.rm = TRUE)) %>%
+  mutate(participant_mean = mean(c_across(fry_cols), na.rm = TRUE),
+         french_baseline = french_fry) %>%
   ungroup() %>%
   pivot_longer(cols = fry_cols, names_to = "fry_type", values_to = "rating") %>%
-  mutate(centered_rating = rating - participant_mean)
+  mutate(centered_rating = rating - participant_mean,
+         french_centered_rating = rating - french_baseline)
+
+n_participants <- length(unique(data$participant_id))
 ```
+
+My friends conveniently straddle the millennial-Gen Z boundary. I texted `r n_participants` friends to ask their ratings of waffle fries on a scale of 1-10. I also asked about french fries, a kind of baseline, as well as curly fries, which I thought might also stir millennial nostalgia. 
+
+The questions were usually asked in the {waffle fry, french fry, curly fry} order; I can't rule out order effects. People often asked questions about the reference set (all experiences? all foods? all potatoes?) and I usually suggested they compare to all foods. They sometimes asked whether to rate the best of that fry type or the average, and I suggested they rate the average. People volunteered information about the variance of liking within fry types, which I discarded. 
+
+If participants gave a rating above 10, I rounded it to 10. This happened twice for waffle fries, with ratings of 11 and 22.
+
+## Results
 
 ```{r}
 data %>%
-  filter(fry_type %in% c("waffle_fry", "french_fry", "curly_fry")) %>%
+  filter(fry_type %in% main_fries) %>%
+  ggplot(aes(x = fry_type, y = rating)) + 
+  geom_violin() +
+  stat_summary(fun = "mean",
+               geom = "point",
+               color = "red") 
+```
+
+Above are the distributions of ratings and means (in red) for the main fries I tested. The means are strikingly similar. 
+
+People often noted that french fries have greater variance, and as noted above I discarded this; intriguingly, curly fries seem to have more between-person variance of average ratings. Avenues for future research.
+
+```{r}
+data %>%
+  ggplot(aes(x = fry_type, y = rating)) + 
+  geom_violin() +
+  stat_summary(fun = "mean",
+               geom = "point",
+               color = "red") +
+  theme(axis.text.x=element_text(angle = 45, vjust = 0.6))
+```
+
+People often volunteered information about other types of fries. This mostly came in the form of complaining about fries they disliked. People don't like sweet potato fries or crinkle cut fries much. Six people mentioned shoestring fries, which had ratings across the map. One person spontaneously mentioned loving double fried french fries.
+
+```{r}
+data %>%
+  filter(fry_type %in% main_fries) %>%
+  ggplot(aes(x = age, y = rating, group = fry_type)) +
+  geom_point() +
+  facet_wrap(~fry_type) +
+  geom_smooth(method='lm') +
+  geom_vline(xintercept = 28.5) 
+```
+
+Now for the main plot. There's a vertical line here to demarcate millennials from Gen Z (Pew says born in 1996 or before, so 28.5). This is way too few participants for these lines to be meaningful, but it seems like if anything, millennials like waffle and curly fries less than Gen Z-ers do.
+
+You may worry, especially with so few participants, that participant-level variation in baseline liking is driving these results, or even that there's a cohort effect such that older individuals just give lower ratings. Keep reading.
+
+```{r}
+data %>%
+  filter(fry_type %in% main_fries) %>%
   ggplot(aes(x = age, y = centered_rating, group = fry_type)) +
   geom_point() +
   facet_wrap(~fry_type) +
-  geom_smooth()
+  geom_smooth(method='lm') +
+  geom_vline(xintercept = 28.5) 
 ```
+
+Here are ratings centered around each participant's average rating, including their spontaneously offered ratings of other fries. This helps account for participant variation in baselines. Again, not good evidence for a waffle fry or curly fry premium among millennials.
+
+```{r}
+data %>%
+  filter(fry_type %in% c("curly_fry", "waffle_fry")) %>%
+  ggplot(aes(x = age, y = french_centered_rating, group = fry_type)) +
+  geom_point() +
+  facet_wrap(~fry_type) +
+  geom_smooth(method='lm') +
+  geom_vline(xintercept = 28.5) 
+```
+Maybe you think french fries alone are a better control. Here are the ratings centered around people's ratings of french fries. We have p-hacked as hard as possible to get an effect and there's nothing here.
+
+## Conclusion
+
+Waffle fries don't seem to be especially liked among millennials—at least not at an effect size that would disturb me. I can eat my waffle fries in peace. As ever, when studying human behavior we mostly find nothing at all.
+
+This endeavor was unsystematic and the results are inconclusive. All data and code are open for your review. You may say: all this to assuage your anxieties about aging and dying? Well, people have done worse. 
+

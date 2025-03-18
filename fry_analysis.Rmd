@@ -1,24 +1,37 @@
 ---
-output: 
-  pdf_document:
-    template: ./style/svm-latex-article2.tex
-    keep_tex: true
-sansfont: Linux_Biolinum
 title: "Fry Preferences"
-sansitup: TRUE
+subtitle: "among my intergenerational friends"
+author: "Claire Augusta Bergey"
+date: "`r Sys.Date()`"
+output: 
+  tufte::tufte_html
+sansfont: Linux_Biolinum
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,dev.args = list(bg = 'transparent'))
 library(tidyverse)
 library(here)
+library(tufte)
+library(sjmisc)
+
+theme_update(strip.background =element_rect(fill="transparent"),
+    panel.background = element_rect(fill = "transparent"), # bg of the panel
+    plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+    panel.grid.major = element_blank(), # get rid of major grid
+    panel.grid.minor = element_blank(), # get rid of minor grid
+    legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+    legend.box.background = element_rect(fill = "transparent"), # get rid of legend panel bg
+    legend.key = element_rect(fill = "transparent", colour = NA), # get rid of key legend fill, and of the surrounding
+    axis.line = element_line(colour = "black"))
+
 ```
 
 I was in a bar eating waffle fries and realized the bar was only playing 2010s music. I began to worry this was a millennial bar. They were pandering to me and I had been unaware. 
 
-Were the waffle fries a part of the pandering? To know, I'd have to find out whether millennials like waffle fries more than other people of other generations.
+Were the waffle fries a part of the pandering? To know, I'd have to find out whether millennials like waffle fries more than people of other generations.`r margin_note("*In all honesty, I texted 32 friends while tipsy and now people are asking about the results, so I feel obligated to follow through.*")`
 
-## Method
+# Method
 
 ```{r}
 data <- read_csv(here("data/fry_data.csv"))
@@ -41,19 +54,19 @@ data <- data %>%
 n_participants <- length(unique(data$participant_id))
 ```
 
-My friends conveniently straddle the millennial-Gen Z boundary. I texted `r n_participants` friends to ask their ratings of waffle fries on a scale of 1-10. I also asked about french fries, a kind of baseline, as well as curly fries, which I thought might also stir millennial nostalgia. 
+My friends conveniently straddle the millennial-Gen Z boundary. I asked `r n_participants` friends for their ratings of waffle fries on a scale of 1-10. I also asked about french fries, a kind of baseline, as well as curly fries, which I thought might also stir millennial nostalgia. 
 
-The questions were usually asked in the {waffle fry, french fry, curly fry} order; I can't rule out order effects. People often asked questions about the reference set (all experiences? all foods? all potatoes?) and I usually suggested they compare to all foods. They sometimes asked whether to rate the best of that fry type or the average, and I suggested they rate the average. People volunteered information about the variance of liking within fry types, which I discarded. 
+The questions were usually asked in the (waffle fry, french fry, curly fry) order; I can't rule out order effects. People often asked questions about the reference set (all experiences? all foods? all potatoes?) and I usually suggested they compare to all foods. They sometimes asked whether to rate the best of that fry type or the average, and I suggested they rate the average. People volunteered information about the variance of liking within fry types, which I discarded. 
 
 If participants gave a rating above 10, I rounded it to 10. This happened twice for waffle fries, with ratings of 11 and 22.
 
-## Results
+# Results
 
 ```{r}
 data %>%
   filter(fry_type %in% main_fries) %>%
   ggplot(aes(x = fry_type, y = rating)) + 
-  geom_violin() +
+  geom_violin(fill = NA) +
   stat_summary(fun = "mean",
                geom = "point",
                color = "red") 
@@ -61,12 +74,12 @@ data %>%
 
 Above are the distributions of ratings and means (in red) for the main fries I tested. The means are strikingly similar. 
 
-People often noted that french fries have greater variance, and as noted above I discarded this; intriguingly, curly fries seem to have more between-person variance of average ratings. Avenues for future research.
+People often remarked that french fries have greater variance, and as noted above I discarded this information; intriguingly, curly fries seem to have more between-person variance of average ratings. Avenues for future research.
 
 ```{r}
 data %>%
   ggplot(aes(x = fry_type, y = rating)) + 
-  geom_violin() +
+  geom_violin(fill = NA) +
   stat_summary(fun = "mean",
                geom = "point",
                color = "red") +
@@ -112,9 +125,44 @@ data %>%
 ```
 Maybe you think french fries alone are a better control. Here are the ratings centered around people's ratings of french fries. We have p-hacked as hard as possible to get an effect and there's nothing here.
 
-## Conclusion
+# Conclusion
 
-Waffle fries don't seem to be especially liked among millennials, at least not at an effect size that would disturb me. I can eat my waffle fries in peace. As ever, when studying human behavior we mostly find nothing at all.
+Waffle fries don't seem to be especially liked among millennials, at least not at an effect size that would disturb me. I will eat my waffle fries in peace. As ever, when studying human behavior we mostly find nothing at all.
 
-This endeavor was unsystematic and the results are inconclusive. All data and code are open for your review. You may say, all this to assuage your fears of aging and dying? Well, people have done worse. 
+This endeavor was unsystematic and the results are inconclusive. All data and code are open for your review. You may say: all this to assuage your fears of aging and dying? Well, people have done worse. 
 
+# Addendum
+
+Five people in the dataset happened to have participant IDs that matched their ages. Participant IDs were assigned ordinally starting from 1, by recency in my texts. Five struck me as an unusually high number, especially given that most IDs were under 20 and no participants were. I checked this by permuting the ages 10,000 times to see how often this happened, which was 0.0004% of the time. See below. Lucky sampling.
+
+```{r}
+n_same <- data %>%
+  distinct(participant_id, age) %>%
+  filter(participant_id == age) %>%
+  nrow()
+
+distincts <- data %>%
+  distinct(participant_id, age) 
+
+ids = distincts$participant_id %>% data.frame()
+
+id_rep<- rep(ids, 10000) %>%
+  data.frame()
+
+resampled <- replicate(10000,sample(distincts$age,replace=TRUE)) %>%
+  data.frame() 
+
+diff <- resampled-id_rep 
+
+zeros <- colSums(diff==0) %>%
+  data.frame()
+names(zeros) = c("n_same")
+
+n_more_extreme <- zeros %>%
+  filter(n_same >= 5) %>%
+  nrow()
+
+ggplot(zeros, aes(x = n_same)) +
+  geom_density() +
+  geom_vline(xintercept = 5, color = "red") 
+```

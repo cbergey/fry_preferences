@@ -166,3 +166,5 @@ ggplot(zeros, aes(x = n_same)) +
   geom_density() +
   geom_vline(xintercept = 5, color = "red") 
 ```
+
+Data and analysis code are available at https://github.com/cbergey/fry_preferences.
